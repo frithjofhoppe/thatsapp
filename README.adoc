@@ -2,12 +2,12 @@
 
 === Bearbeitet von
 
-* _Vorname Nachname_
+* Frithjof Hoppe
 
 === Kompatibel mit der App von
 
-* _Vorname Nachname_, _repository-link_
-* _Vorname Nachname_, _repository-link_
+* Nadine Zbinden, https://github.com/emoba-fhnw/thatsapp-hs24-5icb-mj-nadinezbinden
+* Livio Brunner, https://github.com/emoba-fhnw/thatsapp-hs24-5icb-mj-liviobrunner
 
 === Herausstellungsmerkmal meiner App
 
