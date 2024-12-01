@@ -3,6 +3,7 @@ package fhnw.emoba.thatsapp.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -40,7 +41,7 @@ fun ChatOverviewScreen(appModel: ThatsAppModel) {
                 modifier = Modifier.fillMaxSize().padding(16.dp)
             ) {
                 items(chatStore.chats) { chat ->
-                    ChatPreview(chat)
+                    ChatPreview(chat, appModel)
                 }
             }
         }
@@ -48,31 +49,37 @@ fun ChatOverviewScreen(appModel: ThatsAppModel) {
 }
 
 @Composable
-fun ChatPreview(chat: Chat) {
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp)
-        ) {
-            Image(
-                painter = painterResource(id = avatars[chat.user.avatar] ?: R.drawable.bob),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .border(1.dp, Color.Black, CircleShape)
-                    .background(Color.White)
-                    .padding(8.dp),
-            )
-            Spacer(modifier = Modifier.width(32.dp))
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(text = chat.user.name, fontWeight = FontWeight.Bold)
-                Text(text = chat.mostRecentMessage)
+fun ChatPreview(chat: Chat, appModel: ThatsAppModel) {
+    with (appModel) {
+        Column(
+            Modifier.clickable {
+                selectChatView(chat)
             }
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = avatars[chat.user.avatar] ?: R.drawable.bob),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .border(1.dp, Color.Black, CircleShape)
+                        .background(Color.White)
+                        .padding(8.dp),
+                )
+                Spacer(modifier = Modifier.width(32.dp))
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(text = chat.user.name, fontWeight = FontWeight.Bold)
+                    Text(text = chat.mostRecentMessage)
+                }
+            }
+            HorizontalDivider(thickness = 1.dp, color = Color.LightGray)
         }
-        HorizontalDivider(thickness = .8.dp, color = Color.LightGray)
     }
 }

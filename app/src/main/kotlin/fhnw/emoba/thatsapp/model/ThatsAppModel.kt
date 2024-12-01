@@ -1,10 +1,10 @@
 package fhnw.emoba.thatsapp.model
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import fhnw.emoba.R
+import fhnw.emoba.thatsapp.data.Chat
 import fhnw.emoba.thatsapp.data.ChatStore
 import fhnw.emoba.thatsapp.data.connectors.MqttConnector
 import fhnw.emoba.thatsapp.data.models.User
@@ -43,6 +43,14 @@ object ThatsAppModel {
 
     // Chat
     var users by mutableStateOf(emptyList<User>());
+    var isChatViewDisplay by mutableStateOf(false);
+    var selectedChat by mutableStateOf<Chat?>(null);
+
+    fun selectChatView(chat: Chat) {
+        selectedChat = chat
+        isChatViewDisplay = true
+        selectedScreen = Screen.CHAT
+    }
 
     fun updateProfile() {
         user = User(
