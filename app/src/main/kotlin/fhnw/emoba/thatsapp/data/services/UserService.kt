@@ -37,8 +37,7 @@ class UserServiceConnection(val user: User, private val mqttConnector: MqttConne
     }
 
     fun subscribe() {
-        mqttConnector.subscribe(
-            topic,
+        mqttConnector.subscribe("$topic/#",
         ) { m ->
             run {
                 val greetedUser = User(m)
@@ -65,7 +64,7 @@ class UserServiceConnection(val user: User, private val mqttConnector: MqttConne
     private fun announce(
         onPublished: () -> Unit = {}, onError: () -> Unit = {}
     ) {
-        mqttConnector.publish(topic, user, onPublished, onError)
+        mqttConnector.publish("$topic/${user.id}", user, onPublished, onError)
     }
 
     private fun greet(

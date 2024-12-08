@@ -69,8 +69,8 @@ class MqttConnector(
             .topic("$topic/$subTopic")
             .payload(notification.asJSONString().asPayload())
             .qos(qos)
-            .retain(false)
-            .messageExpiryInterval(120)
+            .retain(true)
+//            .messageExpiryInterval(120)
             .send()
             .whenComplete { _, throwable ->
                 if (throwable != null) {

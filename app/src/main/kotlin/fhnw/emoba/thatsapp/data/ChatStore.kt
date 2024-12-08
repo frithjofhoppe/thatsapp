@@ -1,6 +1,7 @@
 package fhnw.emoba.thatsapp.data
 
 import android.util.Log
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -13,6 +14,7 @@ import fhnw.emoba.thatsapp.data.models.User
 import fhnw.emoba.thatsapp.data.models.blocks.TextBlock
 import fhnw.emoba.thatsapp.data.services.MessageService
 import fhnw.emoba.thatsapp.data.services.UserService
+import java.time.LocalDateTime
 import java.util.UUID
 
 class ChatStore(mqttConnector: MqttConnector) {
@@ -27,6 +29,9 @@ class ChatStore(mqttConnector: MqttConnector) {
         currentUser = user
         userService.connectWithUser(user, {
             it.onUserAdded { user ->
+                if (chats.any { it.user.id == user.id }) {
+                    return@onUserAdded
+                }
                 Log.d("ThatsAppModel", "User added: ${user.name} - ${user.id}")
                 chats += Chat(user)
             }
@@ -65,13 +70,19 @@ class Chat(val user: User) {
     val messages = mutableStateListOf<Message>();
     var mostRecentMessage by mutableStateOf<String>("")
         private set;
+    var timeStampRecentMessage by mutableStateOf(LocalDateTime.now())
     var unreadMessages by mutableIntStateOf(0)
         private set;
 
     fun addMessage(message: Message) {
         messages.add(message)
-        val textMessage = message.blocks.find { it.type == MessageType.TEXT } as TextBlock
+        var textMessage = message.blocks.find { it.type == MessageType.TEXT }
+        if (textMessage == null) {
+            return
+        }
+        textMessage = textMessage as TextBlock
         mostRecentMessage = textMessage.text
+        timeStampRecentMessage = message.timestamp
         unreadMessages++
     }
 

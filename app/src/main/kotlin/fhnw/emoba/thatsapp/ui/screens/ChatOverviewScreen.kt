@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import fhnw.emoba.R
 import fhnw.emoba.thatsapp.data.Chat
 import fhnw.emoba.thatsapp.model.ThatsAppModel
-import fhnw.emoba.thatsapp.model.ThatsAppModel.avatars
 
 @Composable
 fun ChatOverviewScreen(appModel: ThatsAppModel) {
@@ -35,12 +34,12 @@ fun ChatOverviewScreen(appModel: ThatsAppModel) {
         if (!isSubscribed) {
             Text("Please subscribe to a chat first")
         } else if(chatStore.chats.isEmpty()) {
-            Text("No users found. Tell your friends to join ThatsApp!")
+            Text("No users found yet. Tell your friends to join ThatsApp!")
         } else {
             LazyColumn (
                 modifier = Modifier.fillMaxSize().padding(16.dp)
             ) {
-                items(chatStore.chats) { chat ->
+                items(chatStore.chats.sortedByDescending { it.timeStampRecentMessage }) { chat ->
                     ChatPreview(chat, appModel)
                 }
             }

@@ -24,6 +24,8 @@ class CameraAppConnector(val activity: ComponentActivity) {
     private lateinit var onCanceled: ()       -> Unit
 
     private val cameraLauncher = activity.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        println("CameraAppConnector: onActivityResult")
+        println("resultCode: ${result.resultCode}")
         if (result.resultCode == Activity.RESULT_OK) {
             val options = BitmapFactory.Options().apply {
                 inMutable = true
@@ -41,6 +43,7 @@ class CameraAppConnector(val activity: ComponentActivity) {
 
     fun getBitmap(onSuccess:  (Bitmap) -> Unit,
                   onCanceled: ()       -> Unit) {
+        println("Set Callbacks")
         this.onSuccess  = onSuccess
         this.onCanceled = onCanceled
         cameraLauncher.launch(imageCaptureIntent)
@@ -50,7 +53,7 @@ class CameraAppConnector(val activity: ComponentActivity) {
         Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
             val providerFile = FileProvider.getUriForFile(
                 activity,
-                "fhnw.emoba.fileprovider",
+                "fhnw.emoba.fileprovider2",
                 photoFile
             )
             putExtra(MediaStore.EXTRA_OUTPUT, providerFile)

@@ -45,6 +45,8 @@ room = "2.6.1"
 # @keep
 targetSdk = "34"
 version-catalog-update = "0.8.5"
+play-services-location = "21.0.1"
+camera = "1.1.0"
 
 [libraries]
 accompanist-adaptive = { module = "com.google.accompanist:accompanist-adaptive", version.ref = "accompanist" }
@@ -126,6 +128,11 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx_immutable" }
 okhttp-logging = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
 okhttp3 = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }
+camera-core = { module = "androidx.camera:camera-core", version.ref = "camera" }
+camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camera" }
+camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camera" }
+camera-view = { module = "androidx.camera:camera-view", version.ref = "camera" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

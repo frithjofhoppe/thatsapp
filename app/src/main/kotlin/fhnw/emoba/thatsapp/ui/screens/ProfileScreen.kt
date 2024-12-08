@@ -39,14 +39,16 @@ fun ProfileScreen(appModel: ThatsAppModel) {
                     value = txtUserName,
                     onValueChange = { txtUserName = it },
                     label = { Text("User Name") },
-                    singleLine = true
+                    singleLine = true,
+                    enabled = !isSubscribed
                 )
                 TextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = txtGreeting,
                     onValueChange = { txtGreeting = it },
-                    label = { Text("User Name") },
-                    singleLine = true
+                    label = { Text("Greeting") },
+                    singleLine = true,
+                    enabled = !isSubscribed
                 )
 
                 LazyRow(
@@ -59,7 +61,11 @@ fun ProfileScreen(appModel: ThatsAppModel) {
                             contentDescription = null,
                             modifier = Modifier
                                 .size(128.dp)
-                                .clickable { imgAvatar = avatar }
+                                .clickable {
+                                    if (!isSubscribed) {
+                                        imgAvatar = avatar
+                                    }
+                                }
                                 .border(
                                     width = 2.dp,
                                     color = if (imgAvatar == avatar) Color.Blue else Color.Transparent
@@ -71,7 +77,7 @@ fun ProfileScreen(appModel: ThatsAppModel) {
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { updateProfile() },
-                    enabled = txtUserName.isNotBlank() && txtGreeting.isNotBlank()  && imgAvatar.isNotBlank()
+                    enabled = txtUserName.isNotBlank() && txtGreeting.isNotBlank()  && imgAvatar.isNotBlank() && !isSubscribed
                 ) {
                     Text("Save profile")
                 }

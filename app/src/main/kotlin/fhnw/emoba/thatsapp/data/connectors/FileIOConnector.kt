@@ -59,18 +59,21 @@ fun downloadBitmapFromFileIO(url:       String,
                              onSuccess: (bitmap: Bitmap) -> Unit,
                              onDeleted: () -> Unit = {},
                              onError:   (exception: Exception) -> Unit) {
-
     with(URL(url).openConnection() as HttpsURLConnection) {
         setRequestProperty("User-Agent", "emoba_FileIO_App") //vermeidet den Redirect wie im Browser
         try {
+            println("IMG Connect to $url")
             connect()
         } catch (e: Exception) {
+            println("IMG Failed to connect to $url")
             onError(e)
         }
         try {
+            println("IMG Response code $responseCode")
             onSuccess(bitmap())
         } catch (e: Exception) {  //das ist nur eine Heuristik: Wenn die Response nicht in ein Bitmap umgewandelt werden kann,
             // dann muss der File wohl inzwischen geloescht worden sein
+            println("IMG Failed to convert response to bitmap")
             onDeleted()
         }
     }
