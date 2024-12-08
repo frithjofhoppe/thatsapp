@@ -1,13 +1,6 @@
 package fhnw.emoba.thatsapp.ui.screens
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,7 +22,6 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,10 +30,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,28 +37,31 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import fhnw.emoba.thatsapp.data.connectors.downloadBitmapFromFileIO
-import fhnw.emoba.thatsapp.data.connectors.uploadBitmapToFileIO
 import fhnw.emoba.thatsapp.data.models.Message
 import fhnw.emoba.thatsapp.data.models.blocks.ImageBlock
 import fhnw.emoba.thatsapp.data.models.blocks.LocationBlock
 import fhnw.emoba.thatsapp.data.models.blocks.TextBlock
 import fhnw.emoba.thatsapp.model.ThatsAppModel
 import kotlinx.coroutines.delay
-import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 @Composable
 fun ChatScreen(appModel: ThatsAppModel) {
     with(appModel) {
+        if (photo != null && isPhotoTaken) {
+            PhotoDialog(appModel)
+        } else {
+            Body(appModel)
+        }
+    }
+}
+
+@Composable
+private fun Body(appModel: ThatsAppModel) {
+    with(appModel) {
+
         val listState = rememberLazyListState()
 
         LaunchedEffect(appModel.selectedChat?.messages?.size) {
@@ -79,157 +70,106 @@ fun ChatScreen(appModel: ThatsAppModel) {
             listState.animateScrollToItem(appModel.selectedChat?.messages?.size ?: 0)
         }
 
-        fun sendTextMessage() {
-            if (txtMessage.isNotEmpty()) {
-                val message = Message(
-                    UUID.randomUUID(),
-                    user.id,
-                    LocalDateTime.now(),
-                    arrayListOf(
-                        TextBlock(txtMessage)
-                    )
-                )
-                chatStore.sendMessage(selectedChat!!.user, message)
-                txtMessage = ""
-            }
-        }
-
-        fun sendGeoLocation() {
-            trackCurrentLocation()
-            val message = Message(
-                UUID.randomUUID(),
-                user.id,
-                LocalDateTime.now(),
-                arrayListOf(
-                    LocationBlock(
-                        geoPosition = currentLocation
-                    )
-                )
-            )
-            chatStore.sendMessage(selectedChat!!.user, message)
-        }
-
-        fun openPhotoDialog() {
-            isPhotoTaken = true
-            takePhoto()
-        }
-
-        if (photo != null && isPhotoTaken) {
-            Box(
-                modifier = Modifier.fillMaxSize()
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 120.dp)
             ) {
-                LazyColumn (
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.White)
-                        .padding(10.dp),
-                    verticalArrangement = Arrangement.Top
-                ) {
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            IconButton(onClick = { isPhotoTaken = false; photo = null }) {
-                                Icon(Icons.Filled.Close, contentDescription = "Close")
-                            }
-                        }
-                        Photo(
-                            bitmap = photo!!,
-                            modifier = Modifier
-                        )
-                        MessageField(
-                            onClick = {
-                                uploadChatImage(
-                                    bitmap = photo!!,
-                                    onSuccess = { link ->
-                                        println("Photo uploaded with message ${link}")
-                                        downloadedImages = downloadedImages.plus(Pair(link, Pair(false, photo)))
-                                        println("IMG Prevent downloading by adding manually")
-                                        val message = Message(
-                                            UUID.randomUUID(),
-                                            user.id,
-                                            LocalDateTime.now(),
-                                            arrayListOf(
-                                                ImageBlock(link),
-                                                TextBlock(txtMessage)
-                                            )
-                                        )
-                                        messageService.publish(selectedChat!!.user.id, message)
-                                        selectedChat!!.messages.add(message)
-                                        photo = null
-                                        isPhotoTaken = false
-                                        txtMessage = ""
-                                    })
-                            },
-                            appModel = appModel
-                        )
-                    }
-                }
-                if (isUploadingImage) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.5f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                items(selectedChat!!.messages) { message ->
+                    MessageTile(message, appModel)
                 }
             }
-        } else {
-            Box(modifier = Modifier.fillMaxSize()) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 120.dp)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .background(Color.White.copy(alpha = 0.8f))
+                    .fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    items(selectedChat!!.messages) { message ->
-                        MessageTile(message, appModel)
+                    IconButton(onClick = { openPhotoDialog() }) {
+                        Icon(Icons.Filled.CameraAlt, contentDescription = "Take picture")
+                    }
+                    IconButton(
+                        onClick = { sendGeoLocation() },
+                        enabled = isLocationPermissonGranted
+                    ) {
+                        Icon(Icons.Filled.LocationOn, contentDescription = "Send location")
                     }
                 }
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .background(Color.White.copy(alpha = 0.8f))
-                        .fillMaxWidth()
-                ) {
+                MessageField(onClick = { sendTextMessage() }, appModel = appModel, modifier = Modifier.padding(8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun PhotoDialog(appModel: ThatsAppModel) {
+    with (appModel) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+                    .padding(10.dp),
+                verticalArrangement = Arrangement.Top
+            ) {
+                item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        IconButton(onClick = { openPhotoDialog() }) {
-                            Icon(Icons.Filled.CameraAlt, contentDescription = "Take picture")
-                        }
-                        IconButton(
-                            onClick = { sendGeoLocation() },
-                            enabled = isLocationPermissonGranted
-                        ) {
-                            Icon(Icons.Filled.LocationOn, contentDescription = "Send location")
+                        IconButton(onClick = { isPhotoTaken = false; photo = null }) {
+                            Icon(Icons.Filled.Close, contentDescription = "Close")
                         }
                     }
-                    Row(
+                    Photo(
+                        bitmap = photo!!,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(70.dp)
-                            .padding(start = 8.dp)
-                    ) {
-                        TextField(
-                            value = txtMessage,
-                            onValueChange = { txtMessage = it },
-                            modifier = Modifier.weight(1f)
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxHeight(),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            IconButton(onClick = { sendTextMessage() }) {
-                                Icon(Icons.Filled.Send, contentDescription = "Send location")
-                            }
-                        }
-                    }
+                    )
+                    MessageField(
+                        onClick = {
+                            uploadChatImage(
+                                bitmap = photo!!,
+                                onSuccess = { link ->
+                                    println("Photo uploaded with message ${link}")
+                                    downloadedImages =
+                                        downloadedImages.plus(Pair(link, Pair(false, photo)))
+                                    println("IMG Prevent downloading by adding manually")
+                                    val message = Message(
+                                        UUID.randomUUID(),
+                                        user.id,
+                                        LocalDateTime.now(),
+                                        arrayListOf(
+                                            ImageBlock(link),
+                                            TextBlock(txtMessage)
+                                        )
+                                    )
+                                    messageService.publish(selectedChat!!.user.id, message)
+                                    selectedChat!!.messages.add(message)
+                                    photo = null
+                                    isPhotoTaken = false
+                                    txtMessage = ""
+                                })
+                        },
+                        appModel = appModel
+                    )
+                }
+            }
+            if (isUploadingImage) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.5f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
             }
         }

@@ -62,6 +62,7 @@ fun AppUI(model: ThatsAppModel) {
                                     IconButton (onClick = {
                                         selectedScreen = Screen.CHATS
                                         isChatViewDisplay = false
+                                        // TODO reset photo when leaving chat
                                     }) {
                                         Icon(Icons.Filled.ArrowBackIosNew, contentDescription = "Back", tint = Color.White)
                                     }

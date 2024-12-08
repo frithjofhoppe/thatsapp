@@ -16,6 +16,7 @@ import fhnw.emoba.thatsapp.data.models.GeoPosition
 import fhnw.emoba.thatsapp.data.models.Message
 import fhnw.emoba.thatsapp.data.models.User
 import fhnw.emoba.thatsapp.data.models.blocks.ImageBlock
+import fhnw.emoba.thatsapp.data.models.blocks.LocationBlock
 import fhnw.emoba.thatsapp.data.models.blocks.TextBlock
 import fhnw.emoba.thatsapp.data.services.GPSConnector
 import fhnw.emoba.thatsapp.data.services.MessageService
@@ -62,13 +63,11 @@ class ThatsAppModel(
     var userServiceConnection by mutableStateOf(UserServiceConnection(user, connector))
 
     // Chat
-    var users by mutableStateOf(emptyList<User>());
     var isChatViewDisplay by mutableStateOf(false);
     var selectedChat by mutableStateOf<Chat?>(null);
     var txtMessage by mutableStateOf("")
     var currentLocation by mutableStateOf(GeoPosition(0.0, 0.0, 0.0))
     var isLocationPermissonGranted by mutableStateOf(false)
-    var currentPhoto by mutableStateOf<Bitmap?>(null)
     var isPhotoTaken by mutableStateOf(false)
     private val backgroundJob = SupervisorJob()
     private val modelScope = CoroutineScope(backgroundJob + Dispatchers.IO)
@@ -115,6 +114,12 @@ class ThatsAppModel(
         }
     }
 
+    fun clearChatInput() {
+        isPhotoTaken = false
+        photo = null
+        txtMessage = ""
+    }
+
     fun trackCurrentLocation() {
         gpsConnector.getLocation(
             onNewLocation = {
@@ -138,6 +143,41 @@ class ThatsAppModel(
         selectedScreen = Screen.CHAT
     }
 
+    fun sendTextMessage() {
+        if (txtMessage.isNotEmpty()) {
+            val message = Message(
+                UUID.randomUUID(),
+                user.id,
+                LocalDateTime.now(),
+                arrayListOf(
+                    TextBlock(txtMessage)
+                )
+            )
+            chatStore.sendMessage(selectedChat!!.user, message)
+            clearChatInput()
+        }
+    }
+
+    fun sendGeoLocation() {
+        trackCurrentLocation()
+        val message = Message(
+            UUID.randomUUID(),
+            user.id,
+            LocalDateTime.now(),
+            arrayListOf(
+                LocationBlock(
+                    geoPosition = currentLocation
+                )
+            )
+        )
+        chatStore.sendMessage(selectedChat!!.user, message)
+    }
+
+    fun openPhotoDialog() {
+        isPhotoTaken = true
+        takePhoto()
+    }
+
     fun updateProfile() {
         user = User(
             id = userId,
@@ -154,8 +194,6 @@ class ThatsAppModel(
 
     var photo by mutableStateOf<Bitmap?>(null)
 
-    var notificationMessage by mutableStateOf("")
-
     fun takePhoto() {
         cameraAppConnector.getBitmap(onSuccess = {
             println("Photo taken")
@@ -163,8 +201,7 @@ class ThatsAppModel(
             txtMessage = ""
         },
             onCanceled = {
-                isPhotoTaken = false
-                txtMessage = ""
+                clearChatInput()
             })
     }
 }
