@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fhnw.emoba.R
@@ -57,14 +58,14 @@ fun AppUI(model: ThatsAppModel) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             if(isChatViewDisplay && selectedChat != null){
-                                Row (verticalAlignment = Alignment.CenterVertically) {
+                                Row (verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)){
                                     IconButton (onClick = {
                                         selectedScreen = Screen.CHATS
                                         isChatViewDisplay = false
                                     }) {
                                         Icon(Icons.Filled.ArrowBackIosNew, contentDescription = "Back", tint = Color.White)
                                     }
-                                    Text(selectedChat!!.user.name, color = Color.White)
+                                    Text(selectedChat!!.user.name, color = Color.White, overflow = TextOverflow.Ellipsis, maxLines = 1)
                                 }
                                 Image(
                                     painter = painterResource(id = avatars[selectedChat!!.user.avatar] ?: R.drawable.bob),

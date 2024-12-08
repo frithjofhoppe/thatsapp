@@ -79,7 +79,7 @@ fun ProfileScreen(appModel: ThatsAppModel) {
                     onClick = { updateProfile() },
                     enabled = txtUserName.isNotBlank() && txtGreeting.isNotBlank()  && imgAvatar.isNotBlank() && !isSubscribed
                 ) {
-                    Text("Save profile")
+                    Text("Register profile")
                 }
             }
         }

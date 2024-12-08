@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fhnw.emoba.R
 import fhnw.emoba.thatsapp.data.Chat
@@ -74,7 +75,7 @@ fun ChatPreview(chat: Chat, appModel: ThatsAppModel) {
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(text = chat.user.name, fontWeight = FontWeight.Bold)
+                    Text(text = chat.user.name, fontWeight = FontWeight.Bold, overflow = TextOverflow.Ellipsis, maxLines = 1)
                     Text(text = chat.mostRecentMessage)
                 }
             }

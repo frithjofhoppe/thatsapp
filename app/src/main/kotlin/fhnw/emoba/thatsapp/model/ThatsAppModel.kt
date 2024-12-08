@@ -39,7 +39,7 @@ class ThatsAppModel(
     var connector = MqttConnector()
     var messageService = MessageService(connector)
     var userService = UserService(connector)
-    var chatStore = ChatStore(connector)
+    var chatStore = ChatStore(connector, componentActivity.applicationContext)
 
     // Profile
     var userId by mutableStateOf(UUID.randomUUID())
@@ -73,13 +73,19 @@ class ThatsAppModel(
     private val backgroundJob = SupervisorJob()
     private val modelScope = CoroutineScope(backgroundJob + Dispatchers.IO)
     var downloadedImages by mutableStateOf(emptyMap<String, Pair<Boolean, Bitmap?>>())
+    var isUploadingImage by mutableStateOf(false)
 
     fun uploadChatImage(bitmap: Bitmap, onSuccess: (String) -> Unit) {
         modelScope.launch {
+            isUploadingImage = true
             uploadBitmapToFileIO(
                 bitmap,
-                onSuccess = onSuccess,
+                onSuccess = {
+                    isUploadingImage = false
+                    onSuccess(it)
+                },
                 onError = { error, mesg ->
+                    isUploadingImage = false
                     println("Error occured while uploading photo")
                 }
             )

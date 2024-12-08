@@ -30,8 +30,10 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -61,6 +63,7 @@ import fhnw.emoba.thatsapp.model.ThatsAppModel
 import kotlinx.coroutines.delay
 import java.io.File
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -112,51 +115,66 @@ fun ChatScreen(appModel: ThatsAppModel) {
         }
 
         if (photo != null && isPhotoTaken) {
-            LazyColumn (
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White)
-                    .padding(10.dp),
-                verticalArrangement = Arrangement.Top
+            Box(
+                modifier = Modifier.fillMaxSize()
             ) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        IconButton(onClick = { isPhotoTaken = false; photo = null }) {
-                            Icon(Icons.Filled.Close, contentDescription = "Close")
+                LazyColumn (
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White)
+                        .padding(10.dp),
+                    verticalArrangement = Arrangement.Top
+                ) {
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            IconButton(onClick = { isPhotoTaken = false; photo = null }) {
+                                Icon(Icons.Filled.Close, contentDescription = "Close")
+                            }
                         }
-                    }
-                    Photo(
-                        bitmap = photo!!,
-                        modifier = Modifier
-                    )
-                    MessageField(
-                        onClick = {
-                            uploadChatImage(
-                                bitmap = photo!!,
-                                onSuccess = { link ->
-                                    println("Photo uploaded with message ${link}")
-                                    downloadedImages = downloadedImages.plus(Pair(link, Pair(false, photo)))
-                                    println("IMG Prevent downloading by adding manually")
-                                    val message = Message(
-                                        UUID.randomUUID(),
-                                        user.id,
-                                        LocalDateTime.now(),
-                                        arrayListOf(
-                                            ImageBlock(link),
-                                            TextBlock(txtMessage)
+                        Photo(
+                            bitmap = photo!!,
+                            modifier = Modifier
+                        )
+                        MessageField(
+                            onClick = {
+                                uploadChatImage(
+                                    bitmap = photo!!,
+                                    onSuccess = { link ->
+                                        println("Photo uploaded with message ${link}")
+                                        downloadedImages = downloadedImages.plus(Pair(link, Pair(false, photo)))
+                                        println("IMG Prevent downloading by adding manually")
+                                        val message = Message(
+                                            UUID.randomUUID(),
+                                            user.id,
+                                            LocalDateTime.now(),
+                                            arrayListOf(
+                                                ImageBlock(link),
+                                                TextBlock(txtMessage)
+                                            )
                                         )
-                                    )
-                                    messageService.publish(selectedChat!!.user.id, message)
-                                    selectedChat!!.messages.add(message)
-                                    photo = null
-                                    isPhotoTaken = false
-                                })
-                        },
-                        appModel = appModel
-                    )
+                                        messageService.publish(selectedChat!!.user.id, message)
+                                        selectedChat!!.messages.add(message)
+                                        photo = null
+                                        isPhotoTaken = false
+                                        txtMessage = ""
+                                    })
+                            },
+                            appModel = appModel
+                        )
+                    }
+                }
+                if (isUploadingImage) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.5f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
         } else {
@@ -280,7 +298,7 @@ fun MessageTile(message: Message, appModel: ThatsAppModel) {
                     is ImageBlock -> MessageImageTile(block, appModel)
                 }
             }
-            Text(text = message.timestamp.toString(), fontSize = 10.sp)
+            Text(text = message.timestamp.format(DateTimeFormatter.ofPattern("dd.MM.yyyy, HH:mm")), fontSize = 10.sp)
         }
     }
 }
@@ -296,6 +314,8 @@ fun MessageImageTile(imageBlock: ImageBlock, appModel: ThatsAppModel) {
                 bitmap = img!!,
                 modifier = Modifier
             )
+        } else {
+            LinearProgressIndicator()
         }
     }
 }
@@ -305,67 +325,5 @@ fun MessageLocationTile(locationBlock: LocationBlock) {
     Row {
         Icon(Icons.Filled.LocationOn, contentDescription = "Location")
         Text("My current location: ${locationBlock.geoPosition.latitude}, ${locationBlock.geoPosition.longitude}")
-    }
-}
-
-
-@Composable
-fun CameraBox(appModel: ThatsAppModel) {
-    val context = appModel.componentActivity
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-    val imageCapture = remember { ImageCapture.Builder().build() }
-    val cameraExecutor: ExecutorService = remember { Executors.newSingleThreadExecutor() }
-    var previewView by remember { mutableStateOf<PreviewView?>(null) }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            factory = { ctx ->
-                PreviewView(ctx).also { previewView = it }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        Button(
-            onClick = {
-                val photoFile =
-                    File(context.externalMediaDirs.first(), "${System.currentTimeMillis()}.jpg")
-                val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-                imageCapture.takePicture(
-                    outputOptions,
-                    ContextCompat.getMainExecutor(context),
-                    object : ImageCapture.OnImageSavedCallback {
-                        override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                            val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
-                            appModel.currentPhoto = bitmap
-                        }
-
-                        override fun onError(exception: ImageCaptureException) {
-                            // Handle error
-                        }
-                    }
-                )
-            },
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text("Capture Photo")
-        }
-    }
-
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    LaunchedEffect(cameraProviderFuture) {
-        val cameraProvider = cameraProviderFuture.get()
-        val preview = Preview.Builder().build().also {
-            it.setSurfaceProvider(previewView?.surfaceProvider)
-        }
-        val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-
-        cameraProvider.unbindAll()
-        cameraProvider.bindToLifecycle(
-            lifecycleOwner,
-            cameraSelector,
-            preview,
-            imageCapture
-        )
     }
 }

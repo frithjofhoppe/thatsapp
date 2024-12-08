@@ -1,7 +1,11 @@
 package fhnw.emoba.thatsapp.data
 
+import android.content.Context
+import android.media.MediaPlayer
+import android.media.RingtoneManager
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.util.Log
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -17,10 +21,12 @@ import fhnw.emoba.thatsapp.data.services.UserService
 import java.time.LocalDateTime
 import java.util.UUID
 
-class ChatStore(mqttConnector: MqttConnector) {
+class ChatStore(mqttConnector: MqttConnector, context: Context) {
     private val userService = UserService(mqttConnector)
     private val messageService = MessageService(mqttConnector)
-
+    private val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+    private val vibrator: Vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    private val mediaPlayer: MediaPlayer = MediaPlayer.create(context, notificationUri)
     var chats by mutableStateOf(listOf<Chat>())
     var currentUser by mutableStateOf<User?>(null)
 
@@ -47,6 +53,7 @@ class ChatStore(mqttConnector: MqttConnector) {
             currentUser!!.id,
             onReceiveMessage = {
                 getChatByUserId(it.sender)?.addMessage(it)
+                playNotification()
             },
         )
     }
@@ -62,6 +69,13 @@ class ChatStore(mqttConnector: MqttConnector) {
 
     fun getChatByUserId(userId: UUID): Chat? {
         return chats.find { it.user.id == userId }
+    }
+
+    private fun playNotification() {
+        mediaPlayer.start()
+        if (vibrator.hasVibrator()) {
+            vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+        }
     }
 }
 
